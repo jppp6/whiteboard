@@ -1,0 +1,40 @@
+body {
+    margin: 0;
+    font-family: Roboto, "Helvetica Neue", sans-serif;
+}
+.flex {
+    flex: 1 1 auto;
+}
+
+.flex-box {
+    display: flex;
+    flex-direction: column;
+}
+
+.h100 {
+    height: 100%;
+}
+
+.w100 {
+    width: 100%;
+}
+
+.drag-handle {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    cursor: move;
+    color: #666;
+    z-index: 10;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.edit-button {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    transition: opacity 0.2s ease;
+    z-index: 10;
+    opacity: 0;
+}
