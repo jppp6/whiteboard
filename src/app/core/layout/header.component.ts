@@ -148,7 +148,7 @@ export class Header {
     projectName = signal<string>('Classroom Board');
     isExpanded = signal<boolean>(false);
 
-    readonly version = 'v1.1.2';
+    readonly version = 'v1.1.3';
 
     expand(): void {
         this.isExpanded.set(true);

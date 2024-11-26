@@ -25,5 +25,5 @@ export const routes: Routes = [
         component: Selector,
         // canActivate: [authGuard]
     },
-    { path: '**', redirectTo: 'whiteboards' },
+    { path: '**', redirectTo: 'login' },
 ];

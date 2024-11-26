@@ -57,7 +57,7 @@ export class TextWidget implements OnInit {
     ngOnInit() {
         this.text.set(this.metadata().text);
         this._textChange
-            .pipe(debounceTime(3000), distinctUntilChanged())
+            .pipe(debounceTime(2000), distinctUntilChanged())
             .subscribe((text) => {
                 this.metadataChanged.emit({
                     text: text,
@@ -66,6 +66,6 @@ export class TextWidget implements OnInit {
     }
 
     onTextChange(e: ContentChange) {
-        this._textChange.next(e.text);
+        this._textChange.next(e.html || '');
     }
 }

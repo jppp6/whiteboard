@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, model, OnInit } from '@angular/core';
+import { Component, inject, model, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import {
@@ -40,12 +40,12 @@ import { MatSelectModule } from '@angular/material/select';
         </mat-dialog-content>
 
         <mat-dialog-actions align="start">
-            <button mat-stroked-button (click)="deleteWhiteboard()">
-                {{ deleteConfirmation ? 'Delete' : 'Are you sure?' }}
+            <button mat-button (click)="deleteWhiteboard()">
+                {{ deleteConfirmation() ? 'Delete' : 'Are you sure?' }}
             </button>
             <span class="flex"></span>
             <button mat-button mat-dialog-close>Cancel</button>
-            <button mat-button (click)="confirm()" [disabled]="!name()">
+            <button mat-stroked-button (click)="confirm()" [disabled]="!name()">
                 Update
             </button>
         </mat-dialog-actions>
@@ -60,26 +60,33 @@ export class EditComponent implements OnInit {
 
     name = model<string>('');
     notes = model<string>('');
+    deleteConfirmation = signal<boolean>(true);
 
-    deleteConfirmation = true;
-
-    ngOnInit() {
+    ngOnInit(): void {
         this.name.set(this._data.name);
         this.notes.set(this._data.notes);
     }
 
     deleteWhiteboard(): void {
-        if (this.deleteConfirmation) {
-            this.deleteConfirmation = !this.deleteConfirmation;
+        if (this.deleteConfirmation()) {
+            this.deleteConfirmation.update((val) => !val);
             return;
         }
         this._dialogRef.close({ delete: true });
     }
-    close() {
+
+    close(): void {
         this._dialogRef.close();
     }
 
-    confirm() {
-        this._dialogRef.close({ name: this.name(), notes: this.notes() });
+    confirm(): void {
+        if (
+            this.name() !== this._data.name ||
+            this.notes() !== this._data.notes
+        ) {
+            this._dialogRef.close({ name: this.name(), notes: this.notes() });
+        } else {
+            this.close();
+        }
     }
 }
