@@ -1,27 +1,39 @@
-import { Component, input, model } from '@angular/core';
+import {
+    Component,
+    EventEmitter,
+    input,
+    model,
+    OnInit,
+    Output,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
+import { ContentChange, QuillModule } from 'ngx-quill';
+import { debounceTime, distinctUntilChanged, Subject } from 'rxjs';
 
 @Component({
     selector: 'text',
-    imports: [MatFormFieldModule, FormsModule, MatInputModule, MatIconModule],
+    imports: [FormsModule, MatIconModule, QuillModule],
     template: `
-        <div class="text-wrapper" style="width: 500px;">
+        <div class="text-wrapper">
             <div class="drag-handle">
                 <mat-icon>drag_indicator</mat-icon>
             </div>
             <div class="text-container" (mousedown)="$event.stopPropagation()">
-                <mat-form-field class="h100 w100" subscriptSizing="dynamic">
-                    <mat-label>Notes</mat-label>
-                    <textarea matInput [(ngModel)]="text"></textarea>
-                </mat-form-field>
+                <quill-editor
+                    theme="snow"
+                    [(ngModel)]="text"
+                    (onContentChanged)="onTextChange($event)"
+                ></quill-editor>
             </div>
         </div>
     `,
     styles: [
         `
+            .text-wrapper {
+                width: 500px;
+            }
+
             .text-wrapper:hover .drag-handle {
                 opacity: 1;
             }
@@ -35,8 +47,25 @@ import { MatInputModule } from '@angular/material/input';
         `,
     ],
 })
-export class TextWidget {
+export class TextWidget implements OnInit {
     metadata = input.required<{ text: string }>();
+    @Output() metadataChanged = new EventEmitter<{ text: string }>();
 
     text = model<string>('');
+    private _textChange = new Subject<string>();
+
+    ngOnInit() {
+        this.text.set(this.metadata().text);
+        this._textChange
+            .pipe(debounceTime(3000), distinctUntilChanged())
+            .subscribe((text) => {
+                this.metadataChanged.emit({
+                    text: text,
+                });
+            });
+    }
+
+    onTextChange(e: ContentChange) {
+        this._textChange.next(e.text);
+    }
 }

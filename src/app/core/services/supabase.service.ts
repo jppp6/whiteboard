@@ -55,7 +55,7 @@ export class SupabaseService {
     async getWhiteboard(id: string) {
         const { data, error } = await this.supabaseClient
             .from('whiteboards')
-            .select('id, name, widgets')
+            .select('id, name, widgets, notes')
             .eq('id', id)
             .single();
 
@@ -65,6 +65,7 @@ export class SupabaseService {
                 data: {
                     id: '',
                     name: '',
+                    notes: '',
                     widgets: [],
                 },
                 error: 'Error fetching whiteboard',
@@ -74,10 +75,41 @@ export class SupabaseService {
         return { data: data, error: null };
     }
 
-    async updateWhiteboard(id: string, widgets: Widget[]) {
+    async deleteWhiteboard(id: string) {
+        const { data, error } = await this.supabaseClient
+            .from('whiteboards')
+            .delete()
+            .eq('id', id)
+            .single();
+
+        if (error) {
+            console.error('Error deleting whiteboard:', error.message);
+            return {
+                data: null,
+                error: 'Error deleting whiteboard',
+            };
+        }
+        return { data: data, error: null };
+    }
+
+    async updateWidgets(id: string, widgets: Widget[]) {
         const { error } = await this.supabaseClient
             .from('whiteboards')
             .update({ widgets })
+            .eq('id', id);
+
+        if (error) {
+            console.error('Error updating whiteboard:', error.message);
+            return 'Error updating whiteboard';
+        }
+
+        return null;
+    }
+
+    async updateName(id: string, name: string, notes: string) {
+        const { error } = await this.supabaseClient
+            .from('whiteboards')
+            .update({ name, notes })
             .eq('id', id);
 
         if (error) {

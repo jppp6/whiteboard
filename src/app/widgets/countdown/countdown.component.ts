@@ -33,10 +33,10 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
                 <mat-icon>drag_indicator</mat-icon>
             </div>
             <div class="timer-container" (mousedown)="$event.stopPropagation()">
+                @if (isRunning()){
                 <div class="timer-display">
                     {{ displayTime() }}
                 </div>
-                @if (isRunning()){
                 <mat-progress-bar
                     mode="determinate"
                     [value]="progress()"
@@ -44,7 +44,11 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
                 <br />
                 } @else {
                 <div class="timer-input">
-                    <mat-form-field appearance="outline" class="time-input">
+                    <mat-form-field
+                        appearance="outline"
+                        class="time-input"
+                        subscriptSizing="dynamic"
+                    >
                         <mat-label>Minutes</mat-label>
                         <input
                             matInput
@@ -54,7 +58,11 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
                             max="999"
                         />
                     </mat-form-field>
-                    <mat-form-field appearance="outline" class="time-input">
+                    <mat-form-field
+                        appearance="outline"
+                        class="time-input"
+                        subscriptSizing="dynamic"
+                    >
                         <mat-label>Seconds</mat-label>
                         <input
                             matInput
@@ -68,18 +76,10 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
                 }
 
                 <div class="timer-controls">
-                    <button
-                        mat-raised-button
-                        color="primary"
-                        (click)="toggleTimer()"
-                    >
+                    <button mat-raised-button (click)="toggleTimer()">
                         {{ isRunning() ? 'Pause' : 'Start' }}
                     </button>
-                    <button
-                        mat-raised-button
-                        color="warn"
-                        (click)="resetTimer()"
-                    >
+                    <button mat-raised-button (click)="resetTimer()">
                         Reset
                     </button>
                 </div>
@@ -103,13 +103,14 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
                 font-size: 32px;
                 font-weight: bold;
                 text-align: center;
-                margin-bottom: 16px;
+                margin-bottom: 8px;
                 font-family: monospace;
             }
 
             .timer-input {
                 display: flex;
                 gap: 8px;
+                padding-bottom: 12px;
             }
 
             .time-input {
@@ -125,31 +126,31 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
     ],
 })
 export class CountdownWidget implements OnInit, OnDestroy {
-    // Starting state
     metadata = input.required<{ minutes: number; seconds: number }>();
     @Output() metadataChanged = new EventEmitter<{
         minutes: number;
         seconds: number;
     }>();
 
-    timerInterval: NodeJS.Timeout | null = null;
     isRunning = signal<boolean>(false);
     remainingTime = signal<number>(0);
     minutes = signal<number>(5);
     seconds = signal<number>(0);
+    private _timerInterval: NodeJS.Timeout | null = null;
 
     progress = computed(
         () =>
             100 *
             (1 - this.remainingTime() / (this.minutes() * 60 + this.seconds()))
     );
-    displayTime = computed(() => {
-        const minutes = Math.floor(this.remainingTime() / 60);
-        const seconds = this.remainingTime() % 60;
-        return `${minutes.toString().padStart(2, '0')}:${seconds
-            .toString()
-            .padStart(2, '0')}`;
-    });
+    displayTime = computed(
+        () =>
+            `${Math.floor(this.remainingTime() / 60)
+                .toString()
+                .padStart(2, '0')}:${(this.remainingTime() % 60)
+                .toString()
+                .padStart(2, '0')}`
+    );
 
     ngOnInit(): void {
         this.minutes.set(this.metadata().minutes);
@@ -159,9 +160,10 @@ export class CountdownWidget implements OnInit, OnDestroy {
     toggleTimer() {
         if (!this.isRunning()) {
             if (this.remainingTime() === 0) {
-                // Initialize timer if starting fresh
                 this.remainingTime.set(this.minutes() * 60 + this.seconds());
-                if (this.remainingTime() === 0) return; // Don't start if no time set
+                if (this.remainingTime() === 0) {
+                    return;
+                }
             }
             this.startTimer();
         } else {
@@ -173,7 +175,7 @@ export class CountdownWidget implements OnInit, OnDestroy {
         this.emitMetadataChange();
 
         this.isRunning.set(true);
-        this.timerInterval = setInterval(() => {
+        this._timerInterval = setInterval(() => {
             if (this.remainingTime() > 0) {
                 this.remainingTime.update((old) => old - 1);
             } else {
@@ -184,8 +186,8 @@ export class CountdownWidget implements OnInit, OnDestroy {
 
     pauseTimer() {
         this.isRunning.set(false);
-        if (this.timerInterval) {
-            clearInterval(this.timerInterval);
+        if (this._timerInterval) {
+            clearInterval(this._timerInterval);
         }
     }
 
@@ -195,8 +197,8 @@ export class CountdownWidget implements OnInit, OnDestroy {
     }
 
     ngOnDestroy() {
-        if (this.timerInterval) {
-            clearInterval(this.timerInterval);
+        if (this._timerInterval) {
+            clearInterval(this._timerInterval);
         }
     }
 

@@ -44,9 +44,6 @@ import { SupabaseService } from '../services/supabase.service';
                         <mat-icon>logout</mat-icon>
                         <span>Log Out</span>
                     </button>
-                    <!-- <a mat-button>
-                        <mat-icon>settings</mat-icon>
-                    </a> -->
                 </div>
             </div>
         </div>
@@ -151,7 +148,7 @@ export class Header {
     projectName = signal<string>('Classroom Board');
     isExpanded = signal<boolean>(false);
 
-    readonly version = 'v1.1.1';
+    readonly version = 'v1.1.2';
 
     expand(): void {
         this.isExpanded.set(true);

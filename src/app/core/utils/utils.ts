@@ -10,6 +10,7 @@ export function defaultMetadata(type: WidgetType) {
         case 'timer':
             return { minutes: 5, seconds: 0 };
         case 'chart':
+            return { dimension: 10 };
         case 'clock':
         case 'date':
         case 'checklist':

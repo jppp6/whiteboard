@@ -20,13 +20,13 @@ import { WidgetSelector, WidgetType } from '../../../core/utils/types';
                 <mat-icon>{{ widget.icon }}</mat-icon>
             </button>
             }
-            <button
+            <!-- <button
                 mat-icon-button
                 matTooltip="More Widgets"
                 class="toolbar-button"
             >
                 <mat-icon>more_horiz</mat-icon>
-            </button>
+            </button> -->
         </div>
     `,
     styles: [
@@ -63,7 +63,7 @@ export class WidgetToolbar {
         { type: 'timer', icon: 'timer', tooltip: 'Add Timer' },
         { type: 'video', icon: 'tv', tooltip: 'Add Video' },
         { type: 'text', icon: 'notes', tooltip: 'Add Text' },
-        { type: 'sticker', icon: 'image', tooltip: 'Add Sticker' },
+        // { type: 'sticker', icon: 'image', tooltip: 'Add Sticker' },
         { type: 'chart', icon: 'table_chart', tooltip: 'Add Chart' },
         { type: 'date', icon: 'calendar_month', tooltip: "Add Today's Date" },
         { type: 'clock', icon: 'schedule', tooltip: 'Add Clock' },

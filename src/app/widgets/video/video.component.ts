@@ -1,5 +1,12 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, input, signal } from '@angular/core';
+import {
+    Component,
+    EventEmitter,
+    inject,
+    input,
+    Output,
+    signal,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -22,19 +29,22 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
             <div class="drag-handle">
                 <mat-icon>drag_indicator</mat-icon>
             </div>
+
             @if (!videoId()) {
             <div class="input-container" (mousedown)="$event.stopPropagation()">
                 <mat-form-field appearance="outline" class="video-input">
                     <mat-label>YouTube Video URL or ID</mat-label>
-                    <input
-                        matInput
-                        [(ngModel)]="inputUrl"
-                        placeholder="https://www.youtube.com/watch?v=..."
-                    />
+                    <input matInput [(ngModel)]="inputUrl" />
+
+                    @if (inputUrl().trim() !== '') {
+                    <button matSuffix mat-icon-button (click)="deleteLink()">
+                        <mat-icon>delete</mat-icon>
+                    </button>
+                    }
                 </mat-form-field>
                 <button
                     mat-raised-button
-                    color="primary"
+                    [disabled]="!inputUrl()"
                     (click)="embedVideo()"
                 >
                     Embed Video
@@ -108,31 +118,42 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 })
 export class VideoWidget {
     metadata = input.required<{ url: string }>();
+    @Output() metadataChanged = new EventEmitter<{ url: string }>();
 
     safeEmbedUrl = signal<SafeResourceUrl>('');
     inputUrl = signal<string>('');
     videoId = signal<string>('');
 
-    private _sanitizer = inject(DomSanitizer);
+    private readonly _sanitizer = inject(DomSanitizer);
 
-    embedVideo() {
-        const extractedId = this.extractVideoId(this.inputUrl());
+    ngOnInit(): void {
+        this.inputUrl.set(this.metadata().url);
+        this.embedVideo();
+    }
+
+    embedVideo(): void {
+        const extractedId = this._extractVideoId(this.inputUrl());
         if (extractedId) {
+            this.emitMetadataChange();
             this.videoId.set(extractedId);
             const embedUrl = `https://www.youtube.com/embed/${extractedId}`;
             this.safeEmbedUrl.set(
                 this._sanitizer.bypassSecurityTrustResourceUrl(embedUrl)
             );
-            this.inputUrl.set('');
         }
     }
 
-    resetVideo() {
+    deleteLink(): void {
+        this.inputUrl.set('');
+        this.emitMetadataChange();
+    }
+
+    resetVideo(): void {
         this.videoId.set('');
         this.safeEmbedUrl.set('');
     }
 
-    private extractVideoId(url: string): string | null {
+    private _extractVideoId(url: string): string | null {
         let videoId: string | null = null;
 
         const urlPattern =
@@ -147,5 +168,11 @@ export class VideoWidget {
         }
 
         return videoId;
+    }
+
+    emitMetadataChange(): void {
+        this.metadataChanged.emit({
+            url: this.inputUrl(),
+        });
     }
 }

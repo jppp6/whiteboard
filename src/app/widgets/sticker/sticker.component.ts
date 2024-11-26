@@ -90,10 +90,10 @@ export class StickerWidget {
 
     stickerUrl = model<string>('');
 
-    private dialog = inject(MatDialog);
+    private readonly _dialog = inject(MatDialog);
 
     openStickerSelector() {
-        const dialogRef = this.dialog.open(StickerSelectorDialog, {
+        const dialogRef = this._dialog.open(StickerSelectorDialog, {
             width: '500px',
             panelClass: 'sticker-selector-dialog',
         });

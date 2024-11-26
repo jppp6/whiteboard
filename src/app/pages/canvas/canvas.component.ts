@@ -9,6 +9,7 @@ import {
     signal,
     viewChild,
 } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -20,9 +21,9 @@ import { ChecklistWidget } from '../../widgets/checklist/checklist.component';
 import { CountdownWidget } from '../../widgets/countdown/countdown.component';
 import { ClockWidget } from '../../widgets/date-time/clock.component';
 import { DateWidget } from '../../widgets/date-time/date.component';
-import { StickerWidget } from '../../widgets/sticker/sticker.component';
 import { TextWidget } from '../../widgets/text/text.component';
 import { VideoWidget } from '../../widgets/video/video.component';
+import { EditComponent } from './edit/edit.component';
 import { WidgetToolbar } from './toolbar/toolbar.component';
 
 @Component({
@@ -32,7 +33,7 @@ import { WidgetToolbar } from './toolbar/toolbar.component';
         WidgetToolbar,
         CountdownWidget,
         TextWidget,
-        StickerWidget,
+        // StickerWidget,
         VideoWidget,
         ChartWidget,
         MatIconModule,
@@ -67,12 +68,23 @@ import { WidgetToolbar } from './toolbar/toolbar.component';
                         (metadataChanged)="handleMetaChange($event, widget)"
                     />
                     } @case ('video') {
-                    <video-player [metadata]="widget.metadata" /> }
-                    @case('text') { <text [metadata]="widget.metadata" /> }
-                    @case('sticker') {
-                    <sticker [metadata]="widget.metadata" />
-                    } @case('chart') { <chart [metadata]="widget.metadata" /> }
-                    @case('checklist') {
+                    <video-player
+                        [metadata]="widget.metadata"
+                        (metadataChanged)="handleMetaChange($event, widget)"
+                    />
+                    } @case('text') {
+                    <text
+                        [metadata]="widget.metadata"
+                        (metadataChanged)="handleMetaChange($event, widget)"
+                    />
+                    }
+                    <!-- @case('sticker') { <sticker [metadata]="widget.metadata" /> }  -->
+                    @case('chart') {
+                    <chart
+                        [metadata]="widget.metadata"
+                        (metadataChanged)="handleMetaChange($event, widget)"
+                    />
+                    } @case('checklist') {
                     <checklist
                         [metadata]="widget.metadata"
                         (metadataChanged)="handleMetaChange($event, widget)"
@@ -84,6 +96,11 @@ import { WidgetToolbar } from './toolbar/toolbar.component';
                     } @default { } }
                 </div>
                 }
+            </div>
+            <div class="edit-zone" [class.active]="isMouseInEditZone()">
+                <div class="edit" (click)="handleEditClick()">
+                    <mat-icon>edit</mat-icon>
+                </div>
             </div>
             <div
                 class="delete-zone"
@@ -136,6 +153,35 @@ import { WidgetToolbar } from './toolbar/toolbar.component';
                 z-index: 100;
             }
 
+            .edit {
+                position: fixed;
+                bottom: 20px;
+                left: 20px;
+                width: 50px;
+                height: 50px;
+                background-color: rgba(0, 0, 255, 0.1);
+                border-radius: 4px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.2s ease;
+            }
+
+            .edit-zone {
+                position: fixed;
+                bottom: 0px;
+                left: 0px;
+                width: 100px;
+                height: 100px;
+                transition: all 0.2s ease;
+                border-radius: 4px;
+                opacity: 0;
+            }
+
+            .edit-zone.active {
+                opacity: 1;
+            }
+
             .delete-zone {
                 position: fixed;
                 bottom: 0px;
@@ -164,18 +210,23 @@ export class WidgetCanvas implements OnInit, AfterViewInit {
     private readonly _snackBar = inject(MatSnackBar);
     private readonly _router = inject(Router);
     private readonly _activatedRoute = inject(ActivatedRoute);
+    private readonly _dialog = inject(MatDialog);
 
     canvasContainer = viewChild.required<ElementRef>('canvasContainer');
 
     private _lastPanPosition = signal<CanvasPosition | null>(null);
+    private _mousePosition = signal<CanvasPosition | null>(null);
     private _widgetStart = signal<CanvasPosition | null>(null);
     private _dragStart = signal<CanvasPosition | null>(null);
     private _offset = signal<CanvasPosition>({ x: 0, y: 0 });
     private _scale = signal<number>(1);
+    private _isPanning = signal<boolean>(false);
 
     selectedWidgetId = signal<string | null>(null);
-    isPanning = signal<boolean>(false);
+    // State
     whiteboardId = signal<string>('');
+    whiteboardName = signal<string>('');
+    whiteboardNotes = signal<string>('');
     widgets = signal<Widget[]>([]);
 
     transformStyle = computed(
@@ -193,12 +244,13 @@ export class WidgetCanvas implements OnInit, AfterViewInit {
         const res = await this._supabaseService.getWhiteboard(
             this.whiteboardId()
         );
-        console.log(res);
         if (res.error) {
             this._snackBar.open(res.error, 'Dismiss', { duration: 1000 });
             this._router.navigate(['select']);
         } else {
             this.widgets.set(res.data.widgets);
+            this.whiteboardName.set(res.data.name);
+            this.whiteboardNotes.set(res.data.notes);
         }
     }
 
@@ -210,6 +262,20 @@ export class WidgetCanvas implements OnInit, AfterViewInit {
         });
     }
 
+    onMouseLeave(event: MouseEvent): void {
+        this._mousePosition.set(null);
+        this.onMouseUp(event);
+    }
+
+    isMouseInEditZone(): boolean {
+        const mousePos = this._mousePosition();
+        if (!mousePos) return false;
+
+        const rect =
+            this.canvasContainer().nativeElement.getBoundingClientRect();
+        return mousePos.x <= rect.left + 100 && mousePos.y >= rect.bottom - 100;
+    }
+
     private isInDeleteZone(event: MouseEvent): boolean {
         const rect =
             this.canvasContainer().nativeElement.getBoundingClientRect();
@@ -219,65 +285,72 @@ export class WidgetCanvas implements OnInit, AfterViewInit {
         );
     }
 
-    handleMetaChange(e: any, currentWidget: Widget) {
-        switch (currentWidget.type) {
+    handleEditClick(): void {
+        const dialogRef = this._dialog.open(EditComponent, {
+            width: '500px',
+            panelClass: 'edit-dialog',
+            data: {
+                name: this.whiteboardName(),
+                notes: this.whiteboardNotes(),
+            },
+        });
+
+        dialogRef.afterClosed().subscribe((result) => {
+            if (result && result.delete) {
+                this.deleteSupabaseWhiteboard();
+            } else if (result && result.name) {
+                this.whiteboardName.set(result.name);
+                this.whiteboardNotes.set(result.notes);
+                this.updateSupabaseWhiteboardName();
+            }
+        });
+    }
+
+    handleMetaChange(e: any, current: Widget) {
+        switch (current.type) {
             case 'video':
-            case 'sticker':
             case 'text':
             case 'timer':
-                this.widgets.update((widgets) =>
-                    widgets.map((widget) =>
-                        widget.id === currentWidget.id
-                            ? {
-                                  ...widget,
-                                  metadata: {
-                                      seconds: e.seconds,
-                                      minutes: e.minutes,
-                                  },
-                              }
-                            : widget
-                    )
-                );
-                break;
             case 'chart':
-            case 'clock':
-            case 'date':
             case 'checklist':
                 this.widgets.update((widgets) =>
-                    widgets.map((widget) =>
-                        widget.id === currentWidget.id
+                    widgets.map((w) =>
+                        w.id === current.id
                             ? {
-                                  ...widget,
+                                  ...w,
                                   metadata: {
-                                      checklist: e.checklist,
-                                      nextId: e.nextId,
+                                      ...e,
                                   },
                               }
-                            : widget
+                            : w
                     )
                 );
+                this.updateSupabaseWidgets();
+                break;
+            case 'sticker':
+            case 'clock':
+            case 'date':
         }
-        this.updateSupabase();
     }
 
     addWidget(type: WidgetType): void {
         const cr = this.canvasContainer().nativeElement.getBoundingClientRect();
         const widget: Widget = {
             id: `${Date.now()}`,
-            type,
+            type: type,
             x: (cr.width / 2 - this._offset().x) / this._scale(),
             y: (cr.height / 2 - this._offset().y) / this._scale(),
             metadata: defaultMetadata(type),
         };
         this.widgets.update((widgets) => [...widgets, widget]);
 
-        this.updateSupabase();
+        this.updateSupabaseWidgets();
     }
 
     onCanvasMouseDown(event: MouseEvent): void {
         if (event.button !== 0 || this.selectedWidgetId()) return;
 
-        this.isPanning.set(true);
+        this._isPanning.set(true);
         this._lastPanPosition.set({ x: event.clientX, y: event.clientY });
     }
 
@@ -291,31 +364,28 @@ export class WidgetCanvas implements OnInit, AfterViewInit {
     }
 
     onMouseMove(event: MouseEvent): void {
+        const { x, y } = { x: event.clientX, y: event.clientY };
+        this._mousePosition.set({ x: x, y: y });
+
         const lastPan = this._lastPanPosition();
         const startPos = this._widgetStart();
         const dragStart = this._dragStart();
 
-        if (this.isPanning() && lastPan) {
-            const deltaX = event.clientX - lastPan.x;
-            const deltaY = event.clientY - lastPan.y;
-
+        if (this._isPanning() && lastPan) {
             this._offset.update((current) => ({
-                x: current.x + deltaX,
-                y: current.y + deltaY,
+                x: current.x + x - lastPan.x,
+                y: current.y + y - lastPan.y,
             }));
 
-            this._lastPanPosition.set({ x: event.clientX, y: event.clientY });
+            this._lastPanPosition.set({ x: x, y: y });
         } else if (this.selectedWidgetId() && dragStart && startPos) {
-            const deltaX = (event.clientX - dragStart.x) / this._scale();
-            const deltaY = (event.clientY - dragStart.y) / this._scale();
-
             this.widgets.update((widgets) =>
                 widgets.map((widget) =>
                     widget.id === this.selectedWidgetId()
                         ? {
                               ...widget,
-                              x: startPos.x + deltaX,
-                              y: startPos.y + deltaY,
+                              x: startPos.x + (x - dragStart.x) / this._scale(),
+                              y: startPos.y + (y - dragStart.y) / this._scale(),
                           }
                         : widget
                 )
@@ -336,11 +406,11 @@ export class WidgetCanvas implements OnInit, AfterViewInit {
                 });
             }
             // this is updates after move and after delete
-            this.updateSupabase();
+            this.updateSupabaseWidgets();
         }
 
-        this.isPanning.set(false);
         this.selectedWidgetId.set(null);
+        this._isPanning.set(false);
         this._lastPanPosition.set(null);
         this._widgetStart.set(null);
         this._dragStart.set(null);
@@ -374,10 +444,33 @@ export class WidgetCanvas implements OnInit, AfterViewInit {
         return `translate(${widget.x}px, ${widget.y}px)`;
     }
 
-    updateSupabase(): void {
-        this._supabaseService.updateWhiteboard(
+    updateSupabaseWidgets(): void {
+        this._supabaseService.updateWidgets(
             this.whiteboardId(),
             this.widgets()
         );
+    }
+
+    updateSupabaseWhiteboardName(): void {
+        this._supabaseService.updateName(
+            this.whiteboardId(),
+            this.whiteboardName(),
+            this.whiteboardNotes()
+        );
+    }
+
+    async deleteSupabaseWhiteboard() {
+        const res = await this._supabaseService.deleteWhiteboard(
+            this.whiteboardId()
+        );
+
+        if (res.error) {
+            this._snackBar.open(res.error, 'Dismiss', { duration: 1000 });
+        } else {
+            this._snackBar.open(`${this.whiteboardName()} deleted`, 'Dismiss', {
+                duration: 1000,
+            });
+            this._router.navigate(['whiteboards']);
+        }
     }
 }

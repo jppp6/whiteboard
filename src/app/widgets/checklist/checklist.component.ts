@@ -47,6 +47,7 @@ import { ChecklistItem } from '../../core/utils/types';
                         [(ngModel)]="newItem"
                         (keyup.enter)="addItem()"
                     />
+
                     @if (newItem().trim() !== '') {
                     <button matSuffix mat-icon-button (click)="addItem()">
                         <mat-icon>add</mat-icon>
@@ -78,35 +79,37 @@ import { ChecklistItem } from '../../core/utils/types';
             </div>
         </div>
     `,
-    styles: `
-    .checklist-wrapper {
-        width: 282px;
-    }   
-    
-    .checklist-container {
-        background: white;
-        padding: 16px;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        width: 250px;
-    }
+    styles: [
+        `
+            .checklist-wrapper {
+                width: 282px;
+            }
 
-    .checklist-wrapper:hover .drag-handle {
-        opacity: 1;
-    }
+            .checklist-container {
+                background: white;
+                padding: 16px;
+                border-radius: 8px;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                width: 250px;
+            }
 
-    .item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      width: 100%;
-    }
+            .checklist-wrapper:hover .drag-handle {
+                opacity: 1;
+            }
 
-    .completed {
-      text-decoration: line-through;
-      color: #666;
-    }
-  `,
+            .item {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                width: 100%;
+            }
+
+            .completed {
+                text-decoration: line-through;
+                color: #666;
+            }
+        `,
+    ],
 })
 export class ChecklistWidget implements OnInit {
     metadata = input.required<{ checklist: ChecklistItem[]; nextId: number }>();
@@ -117,11 +120,11 @@ export class ChecklistWidget implements OnInit {
 
     checklist = signal<ChecklistItem[]>([]);
     newItem = signal<string>('');
-    private nextId: number = 0;
+    private _nextId: number = 0;
 
     ngOnInit(): void {
         this.checklist.set(this.metadata().checklist);
-        this.nextId = this.metadata().nextId;
+        this._nextId = this.metadata().nextId;
     }
 
     addItem() {
@@ -130,7 +133,7 @@ export class ChecklistWidget implements OnInit {
             this.checklist.update((items) => [
                 ...items,
                 {
-                    id: this.nextId++,
+                    id: this._nextId++,
                     text,
                     completed: false,
                 },
@@ -159,7 +162,7 @@ export class ChecklistWidget implements OnInit {
     emitMetadataChange() {
         this.metadataChanged.emit({
             checklist: this.checklist(),
-            nextId: this.nextId,
+            nextId: this._nextId,
         });
     }
 }
