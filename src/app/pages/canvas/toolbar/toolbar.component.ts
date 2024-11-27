@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Output, signal } from '@angular/core';
+import { Component, EventEmitter, Output } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -10,12 +10,12 @@ import { WidgetSelector, WidgetType } from '../../../core/utils/types';
     imports: [CommonModule, MatIconModule, MatButtonModule, MatTooltipModule],
     template: `
         <div class="toolbar-container">
-            @for(widget of widgets(); track widget.type){
+            @for(widget of widgets; track widget.type){
             <button
+                class="toolbar-button"
                 mat-icon-button
                 [matTooltip]="widget.tooltip"
                 (click)="addWidget(widget.type)"
-                class="toolbar-button"
             >
                 <mat-icon>{{ widget.icon }}</mat-icon>
             </button>
@@ -59,18 +59,21 @@ import { WidgetSelector, WidgetType } from '../../../core/utils/types';
 export class WidgetToolbar {
     @Output() widgetSelected = new EventEmitter<WidgetType>();
 
-    widgets = signal<WidgetSelector[]>([
-        { type: 'timer', icon: 'timer', tooltip: 'Add Timer' },
-        { type: 'video', icon: 'tv', tooltip: 'Add Video' },
+    readonly widgets: WidgetSelector[] = [
         { type: 'text', icon: 'notes', tooltip: 'Add Text' },
-        // { type: 'sticker', icon: 'image', tooltip: 'Add Sticker' },
+        { type: 'video', icon: 'tv', tooltip: 'Add Video' },
         { type: 'chart', icon: 'table_chart', tooltip: 'Add Chart' },
-        { type: 'date', icon: 'calendar_month', tooltip: "Add Today's Date" },
-        { type: 'clock', icon: 'schedule', tooltip: 'Add Clock' },
         { type: 'checklist', icon: 'checklist', tooltip: 'Add Checklist' },
-    ]);
+        { type: 'groups', icon: 'groups', tooltip: 'Add Groups' },
+        { type: 'sticker-s', icon: 'image', tooltip: 'Small Sticker ' },
+        { type: 'sticker-l', icon: 'wallpaper', tooltip: 'Large Sticker' },
+        { type: 'date', icon: 'today', tooltip: 'Add Date' },
+        { type: 'calendar', icon: 'calendar_month', tooltip: 'Add Calendar' },
+        { type: 'timer', icon: 'timer', tooltip: 'Add Timer' },
+        { type: 'clock', icon: 'schedule', tooltip: 'Add Clock' },
+    ];
 
-    addWidget(type: WidgetType) {
+    addWidget(type: WidgetType): void {
         this.widgetSelected.emit(type);
     }
 }

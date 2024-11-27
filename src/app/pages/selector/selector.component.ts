@@ -79,7 +79,7 @@ export class Selector implements OnInit {
 
     boards = signal<Whiteboard[]>([]);
 
-    async ngOnInit() {
+    async ngOnInit(): Promise<void> {
         const res = await this._supabaseClient.getAllWhiteboards();
         if (res.error) {
             this._snackBar.open(res.error, 'Dismiss', { duration: 1000 });
@@ -89,7 +89,7 @@ export class Selector implements OnInit {
         }
     }
 
-    async getBoardInfo() {
+    async getBoardInfo(): Promise<void> {
         const dialogRef = this._dialog.open(CreateWhiteBoardDialog, {
             width: '400px',
         });
@@ -98,15 +98,13 @@ export class Selector implements OnInit {
             .afterClosed()
             .subscribe((result: { name: string; notes: string }) => {
                 if (!result.name) {
-                    this._snackBar.open('Please try again', 'Dismiss', {
-                        duration: 1000,
-                    });
                     return;
                 }
                 this.createBoard(result.name, result.notes);
             });
     }
-    async createBoard(name: string, notes: string) {
+
+    async createBoard(name: string, notes: string): Promise<void> {
         const res = await this._supabaseClient.newWhiteboard(name, notes);
         if (res.error) {
             this._snackBar.open(res.error, 'Dismiss', { duration: 1000 });
@@ -115,7 +113,7 @@ export class Selector implements OnInit {
         this.selectBoard(res.data);
     }
 
-    selectBoard(id: string) {
+    selectBoard(id: string): void {
         this._router.navigate(['whiteboard', id]);
     }
 }

@@ -5,6 +5,7 @@ import {
     model,
     OnInit,
     Output,
+    signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
@@ -20,11 +21,19 @@ import { debounceTime, distinctUntilChanged, Subject } from 'rxjs';
                 <mat-icon>drag_indicator</mat-icon>
             </div>
             <div class="text-container" (mousedown)="$event.stopPropagation()">
+                <div class="edit-button" (click)="toggleToolbar()">
+                    <mat-icon>
+                        {{ toolbarVisible() ? 'expand_less' : 'expand_more' }}
+                    </mat-icon>
+                </div>
                 <quill-editor
+                    class="w100"
                     theme="snow"
-                    [(ngModel)]="text"
+                    [class.toolbar-hidden]="!toolbarVisible()"
                     (onContentChanged)="onTextChange($event)"
-                ></quill-editor>
+                    [(ngModel)]="text"
+                >
+                </quill-editor>
             </div>
         </div>
     `,
@@ -38,11 +47,20 @@ import { debounceTime, distinctUntilChanged, Subject } from 'rxjs';
                 opacity: 1;
             }
 
+            .text-wrapper:hover .edit-button {
+                opacity: 1;
+                cursor: pointer;
+            }
+
             .text-container {
                 background: white;
                 padding: 16px;
                 border-radius: 8px;
                 box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            }
+
+            .toolbar-hidden ::ng-deep .ql-toolbar {
+                display: none;
             }
         `,
     ],
@@ -52,9 +70,10 @@ export class TextWidget implements OnInit {
     @Output() metadataChanged = new EventEmitter<{ text: string }>();
 
     text = model<string>('');
+    toolbarVisible = signal<boolean>(false);
     private _textChange = new Subject<string>();
 
-    ngOnInit() {
+    ngOnInit(): void {
         this.text.set(this.metadata().text);
         this._textChange
             .pipe(debounceTime(2000), distinctUntilChanged())
@@ -64,8 +83,10 @@ export class TextWidget implements OnInit {
                 });
             });
     }
-
-    onTextChange(e: ContentChange) {
+    toggleToolbar(): void {
+        this.toolbarVisible.update((v) => !v);
+    }
+    onTextChange(e: ContentChange): void {
         this._textChange.next(e.html || '');
     }
 }

@@ -156,14 +156,13 @@ export class VideoWidget {
     private _extractVideoId(url: string): string | null {
         let videoId: string | null = null;
 
-        const urlPattern =
-            /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
-        const urlMatch = url.match(urlPattern);
+        const urlMatch = url.match(
+            /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/
+        );
 
         if (urlMatch) {
             videoId = urlMatch[1];
         } else if (/^[a-zA-Z0-9_-]{11}$/.test(url)) {
-            // Handle direct video IDs
             videoId = url;
         }
 

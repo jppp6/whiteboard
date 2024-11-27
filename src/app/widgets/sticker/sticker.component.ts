@@ -1,21 +1,23 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, input, model, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import { MatButtonModule } from '@angular/material/button';
 import {
-    MatDialog,
-    MatDialogModule,
-    MatDialogRef,
-} from '@angular/material/dialog';
-import { MatFormFieldModule } from '@angular/material/form-field';
+    Component,
+    EventEmitter,
+    input,
+    OnInit,
+    Output,
+    signal,
+} from '@angular/core';
+import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
 
 @Component({
     selector: 'sticker',
-    imports: [CommonModule, MatButtonModule, MatIconModule, MatDialogModule],
+    imports: [CommonModule, MatButtonModule, MatIconModule],
     template: `
-        <div class="sticker-wrapper">
+        <div
+            class="sticker-wrapper"
+            [ngStyle]="{ width: size() === 's' ? '232px' : ' 332px' }"
+        >
             <div class="drag-handle">
                 <mat-icon>drag_indicator</mat-icon>
             </div>
@@ -23,12 +25,19 @@ import { MatInputModule } from '@angular/material/input';
                 class="sticker-container"
                 (mousedown)="$event.stopPropagation()"
             >
-                <div class="edit-button" (click)="openStickerSelector()">
+                <div class="edit-button" (click)="fileInput.click()">
                     <mat-icon>edit</mat-icon>
                 </div>
-                @if (stickerUrl()) {
+                <input
+                    type="file"
+                    #fileInput
+                    (change)="onFileSelected($event)"
+                    accept="image/*"
+                    style="display: none"
+                />
+                @if (stickerB64()) {
                 <img
-                    [src]="stickerUrl()"
+                    [src]="stickerB64()"
                     alt="Selected sticker"
                     class="sticker-image"
                 />
@@ -47,13 +56,6 @@ import { MatInputModule } from '@angular/material/input';
                 padding: 16px;
                 border-radius: 8px;
                 box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-                width: 200px;
-                height: 200px;
-            }
-
-            .sticker-wrapper {
-                width: 232px;
-                height: 232px;
             }
 
             .sticker-wrapper:hover .edit-button,
@@ -63,7 +65,6 @@ import { MatInputModule } from '@angular/material/input';
 
             .sticker-image {
                 width: 100%;
-                height: 100%;
                 object-fit: contain;
             }
 
@@ -73,7 +74,6 @@ import { MatInputModule } from '@angular/material/input';
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                background: #f5f5f5;
             }
 
             .empty-sticker mat-icon {
@@ -85,133 +85,40 @@ import { MatInputModule } from '@angular/material/input';
         `,
     ],
 })
-export class StickerWidget {
-    metadata = input.required<{ url: string }>();
+export class StickerWidget implements OnInit {
+    metadata = input.required<{ stickerB64: string; size: 's' | 'l' }>();
+    @Output() metadataChanged = new EventEmitter<{
+        stickerB64: string;
+        size: 's' | 'l';
+    }>();
 
-    stickerUrl = model<string>('');
+    stickerB64 = signal<string>('');
+    size = signal<'s' | 'l'>('s');
 
-    private readonly _dialog = inject(MatDialog);
+    ngOnInit(): void {
+        this.stickerB64.set(this.metadata().stickerB64);
+        this.size.set(this.metadata().size);
+    }
 
-    openStickerSelector() {
-        const dialogRef = this._dialog.open(StickerSelectorDialog, {
-            width: '500px',
-            panelClass: 'sticker-selector-dialog',
+    onFileSelected(event: Event): void {
+        const file = (event.target as HTMLInputElement).files?.[0];
+
+        if (file && file.type.startsWith('image/')) {
+            const reader = new FileReader();
+
+            reader.onload = () => {
+                this.stickerB64.set(reader.result as string);
+                this.emitMetadataChange();
+            };
+
+            reader.readAsDataURL(file);
+        }
+    }
+
+    emitMetadataChange() {
+        this.metadataChanged.emit({
+            stickerB64: this.stickerB64(),
+            size: this.size(),
         });
-
-        dialogRef.afterClosed().subscribe((result) => {
-            if (result) {
-                this.stickerUrl.set(result.url);
-            }
-        });
-    }
-}
-@Component({
-    selector: 'sticker-selector-dialog',
-    imports: [
-        CommonModule,
-        MatButtonModule,
-        MatFormFieldModule,
-        MatInputModule,
-        FormsModule,
-    ],
-    template: `
-        <div class="dialog-container">
-            <h2>Select a Sticker</h2>
-            <div class="sticker-grid">
-                @for (sticker of stickers(); track sticker.id) {
-                <div
-                    class="sticker-option"
-                    [class.selected]="selectedSticker() === sticker.url"
-                    (click)="selectSticker(sticker.url)"
-                >
-                    <img [src]="sticker.url" [alt]="sticker.name" />
-                </div>
-                }
-            </div>
-            <div class="dialog-actions">
-                <button mat-button (click)="close()">Cancel</button>
-                <button
-                    mat-raised-button
-                    color="primary"
-                    (click)="confirm()"
-                    [disabled]="!selectedSticker()"
-                >
-                    Apply
-                </button>
-            </div>
-        </div>
-    `,
-    styles: [
-        `
-            .dialog-container {
-                padding: 24px;
-                min-width: 400px;
-            }
-
-            .sticker-grid {
-                display: grid;
-                grid-template-columns: repeat(4, 1fr);
-                gap: 16px;
-                margin: 24px 0;
-                max-height: 400px;
-                overflow-y: auto;
-            }
-
-            .sticker-option {
-                aspect-ratio: 1;
-                padding: 8px;
-                border: 2px solid transparent;
-                border-radius: 8px;
-                cursor: pointer;
-                transition: all 0.2s ease;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }
-
-            .sticker-option:hover {
-                background: rgba(0, 0, 0, 0.04);
-            }
-
-            .sticker-option.selected {
-                border-color: #1976d2;
-                background: rgba(25, 118, 210, 0.04);
-            }
-
-            .sticker-option img {
-                max-width: 100%;
-                max-height: 100%;
-                object-fit: contain;
-            }
-
-            .dialog-actions {
-                display: flex;
-                justify-content: flex-end;
-                gap: 8px;
-                margin-top: 16px;
-            }
-        `,
-    ],
-})
-class StickerSelectorDialog {
-    stickers = signal([
-        { id: 1, name: 'Sticker 1', url: '/assets/stickers/sticker1.png' },
-        { id: 2, name: 'Sticker 2', url: '/assets/stickers/sticker2.png' },
-    ]);
-
-    selectedSticker = signal<string>('');
-
-    private dialogRef = inject(MatDialogRef<StickerSelectorDialog>);
-
-    selectSticker(url: string) {
-        this.selectedSticker.set(url);
-    }
-
-    close() {
-        this.dialogRef.close();
-    }
-
-    confirm() {
-        this.dialogRef.close({ url: this.selectedSticker() });
     }
 }

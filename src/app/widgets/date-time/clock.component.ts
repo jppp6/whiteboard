@@ -47,13 +47,13 @@ export class ClockWidget implements OnInit, OnDestroy {
     time = signal<Date>(new Date());
     private _intervalId: NodeJS.Timeout | null = null;
 
-    ngOnInit() {
+    ngOnInit(): void {
         this._intervalId = setInterval(() => {
             this.time.set(new Date());
         }, 1000);
     }
 
-    ngOnDestroy() {
+    ngOnDestroy(): void {
         if (this._intervalId) {
             clearInterval(this._intervalId);
         }

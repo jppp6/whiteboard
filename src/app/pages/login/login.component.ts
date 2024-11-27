@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, model, signal } from '@angular/core';
+import { Component, inject, model, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -16,27 +16,29 @@ import { SupabaseService } from '../../core/services/supabase.service';
         CommonModule,
         MatFormFieldModule,
     ],
-    template: ` <div class="login-container">
-        <h2>Sign in via magic link with your email below</h2>
+    template: `
+        <div class="login-container">
+            <h2>Sign in via magic link with your email below</h2>
 
-        <mat-form-field style="width: 80%" appearance="outline">
-            <mat-label>Email</mat-label>
-            <input
-                matInput
-                type="email"
-                placeholder="Ex. john.smith@email.ca"
-                [(ngModel)]="email"
-            />
-        </mat-form-field>
-        <br />
-        <button
-            mat-raised-button
-            [disabled]="!email() || loading()"
-            (click)="onSubmit()"
-        >
-            {{ loading() ? 'Loading' : 'Send magic link' }}
-        </button>
-    </div>`,
+            <mat-form-field style="width: 80%" appearance="outline">
+                <mat-label>Email</mat-label>
+                <input
+                    matInput
+                    type="email"
+                    placeholder="Ex. john.smith@email.ca"
+                    [(ngModel)]="email"
+                />
+            </mat-form-field>
+            <br />
+            <button
+                mat-raised-button
+                [disabled]="!email() || loading()"
+                (click)="onSubmit()"
+            >
+                {{ loading() ? 'Loading' : 'Send magic link' }}
+            </button>
+        </div>
+    `,
     styles: [
         `
             .login-container {
@@ -50,8 +52,6 @@ import { SupabaseService } from '../../core/services/supabase.service';
 export class Login {
     private readonly _supabaseService = inject(SupabaseService);
     private readonly _snackBar = inject(MatSnackBar);
-
-    session = computed(() => this._supabaseService._session());
 
     loading = signal<boolean>(false);
     email = model<string>('');

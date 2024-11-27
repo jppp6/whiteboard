@@ -9,7 +9,6 @@ import {
 } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
 
 @Component({
     selector: 'edit-dialog',
@@ -17,7 +16,6 @@ import { MatSelectModule } from '@angular/material/select';
         MatButtonModule,
         FormsModule,
         CommonModule,
-        MatSelectModule,
         MatDialogModule,
         MatFormFieldModule,
         MatInputModule,
@@ -50,7 +48,6 @@ import { MatSelectModule } from '@angular/material/select';
             </button>
         </mat-dialog-actions>
     `,
-    styles: [``],
 })
 export class EditComponent implements OnInit {
     private readonly _dialogRef = inject(MatDialogRef<EditComponent>);

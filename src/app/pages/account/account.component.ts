@@ -1,10 +1,9 @@
 import { Component, inject, OnInit } from '@angular/core';
-import { MatButtonModule } from '@angular/material/button';
 import { SupabaseService } from '../../core/services/supabase.service';
 
 @Component({
     selector: 'app-account',
-    imports: [MatButtonModule],
+    imports: [],
     template: ``,
     styles: ``,
 })

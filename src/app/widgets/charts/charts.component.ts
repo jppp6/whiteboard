@@ -27,11 +27,10 @@ import { EditChartDialog } from './edit/edit-chart.component';
                     <mat-icon>edit</mat-icon>
                 </div>
                 <div>
-                    <mat-grid-list [cols]="dimension()">
+                    <mat-grid-list class="grid-list" [cols]="dimension()">
                         @for(v of tiles() ; track v) {
-                        <mat-grid-tile
-                            style="outline: solid 1px;"
-                        ></mat-grid-tile>
+                        <mat-grid-tile style="outline: solid 1px;">
+                        </mat-grid-tile>
                         }
                     </mat-grid-list>
                 </div>
@@ -40,10 +39,11 @@ import { EditChartDialog } from './edit/edit-chart.component';
     `,
     styles: [
         `
-            mat-grid-list {
+            .grid-list {
                 width: 234px;
                 height: 234px;
             }
+
             .chart-wrapper {
                 display: flex;
                 justify-content: center;

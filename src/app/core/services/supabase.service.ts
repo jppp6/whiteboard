@@ -99,8 +99,8 @@ export class SupabaseService {
             .eq('id', id);
 
         if (error) {
-            console.error('Error updating whiteboard:', error.message);
-            return 'Error updating whiteboard';
+            console.error('Error updating widgets:', error.message);
+            return 'Error updating widgets';
         }
 
         return null;
@@ -113,8 +113,8 @@ export class SupabaseService {
             .eq('id', id);
 
         if (error) {
-            console.error('Error updating whiteboard:', error.message);
-            return 'Error updating whiteboard';
+            console.error('Error updating name:', error.message);
+            return 'Error updating name';
         }
 
         return null;

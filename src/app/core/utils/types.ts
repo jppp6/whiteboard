@@ -28,12 +28,20 @@ export interface ChecklistItem {
     completed: boolean;
 }
 
+export interface Person {
+    name: string;
+    id: number;
+}
+
 export type WidgetType =
     | 'timer'
     | 'video'
     | 'text'
-    | 'sticker'
+    | 'sticker-s'
+    | 'sticker-l'
     | 'chart'
     | 'date'
     | 'clock'
+    | 'calendar'
+    | 'groups'
     | 'checklist';

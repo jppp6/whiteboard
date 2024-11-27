@@ -16,11 +16,14 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { CanvasPosition, Widget, WidgetType } from '../../core/utils/types';
 import { defaultMetadata } from '../../core/utils/utils';
+import { CalendarWidget } from '../../widgets/calendar/calendar.component';
 import { ChartWidget } from '../../widgets/charts/charts.component';
 import { ChecklistWidget } from '../../widgets/checklist/checklist.component';
 import { CountdownWidget } from '../../widgets/countdown/countdown.component';
 import { ClockWidget } from '../../widgets/date-time/clock.component';
 import { DateWidget } from '../../widgets/date-time/date.component';
+import { GroupGeneratorWidget } from '../../widgets/group-generator/group-generator.component';
+import { StickerWidget } from '../../widgets/sticker/sticker.component';
 import { TextWidget } from '../../widgets/text/text.component';
 import { VideoWidget } from '../../widgets/video/video.component';
 import { EditComponent } from './edit/edit.component';
@@ -40,6 +43,9 @@ import { WidgetToolbar } from './toolbar/toolbar.component';
         DateWidget,
         ClockWidget,
         ChecklistWidget,
+        CalendarWidget,
+        GroupGeneratorWidget,
+        StickerWidget,
     ],
     template: `
         <toolbar (widgetSelected)="addWidget($event)"></toolbar>
@@ -77,9 +83,17 @@ import { WidgetToolbar } from './toolbar/toolbar.component';
                         [metadata]="widget.metadata"
                         (metadataChanged)="handleMetaChange($event, widget)"
                     />
-                    }
-                    <!-- @case('sticker') { <sticker [metadata]="widget.metadata" /> }  -->
-                    @case('chart') {
+                    } @case('sticker-s') {
+                    <sticker
+                        [metadata]="widget.metadata"
+                        (metadataChanged)="handleMetaChange($event, widget)"
+                    />
+                    }@case('sticker-l') {
+                    <sticker
+                        [metadata]="widget.metadata"
+                        (metadataChanged)="handleMetaChange($event, widget)"
+                    />
+                    } @case('chart') {
                     <chart
                         [metadata]="widget.metadata"
                         (metadataChanged)="handleMetaChange($event, widget)"
@@ -89,11 +103,18 @@ import { WidgetToolbar } from './toolbar/toolbar.component';
                         [metadata]="widget.metadata"
                         (metadataChanged)="handleMetaChange($event, widget)"
                     />
-                    } @case('date') {
+                    } @case('groups') {
+                    <group-generator
+                        [metadata]="widget.metadata"
+                        (metadataChanged)="handleMetaChange($event, widget)"
+                    />
+                    }@case('date') {
                     <date />
                     } @case('clock') {
                     <clock />
-                    } @default { } }
+                    } @case('calendar') {
+                    <calendar />
+                    } }
                 </div>
                 }
             </div>
@@ -219,8 +240,8 @@ export class WidgetCanvas implements OnInit, AfterViewInit {
     private _widgetStart = signal<CanvasPosition | null>(null);
     private _dragStart = signal<CanvasPosition | null>(null);
     private _offset = signal<CanvasPosition>({ x: 0, y: 0 });
-    private _scale = signal<number>(1);
     private _isPanning = signal<boolean>(false);
+    private _scale = signal<number>(1);
 
     selectedWidgetId = signal<string | null>(null);
     // State
@@ -229,7 +250,7 @@ export class WidgetCanvas implements OnInit, AfterViewInit {
     whiteboardNotes = signal<string>('');
     widgets = signal<Widget[]>([]);
 
-    transformStyle = computed(
+    transformStyle = computed<string>(
         () =>
             `translate(${this._offset().x}px, ${
                 this._offset().y
@@ -307,30 +328,19 @@ export class WidgetCanvas implements OnInit, AfterViewInit {
     }
 
     handleMetaChange(e: any, current: Widget) {
-        switch (current.type) {
-            case 'video':
-            case 'text':
-            case 'timer':
-            case 'chart':
-            case 'checklist':
-                this.widgets.update((widgets) =>
-                    widgets.map((w) =>
-                        w.id === current.id
-                            ? {
-                                  ...w,
-                                  metadata: {
-                                      ...e,
-                                  },
-                              }
-                            : w
-                    )
-                );
-                this.updateSupabaseWidgets();
-                break;
-            case 'sticker':
-            case 'clock':
-            case 'date':
-        }
+        this.widgets.update((widgets) =>
+            widgets.map((w) =>
+                w.id === current.id
+                    ? {
+                          ...w,
+                          metadata: {
+                              ...e,
+                          },
+                      }
+                    : w
+            )
+        );
+        this.updateSupabaseWidgets();
     }
 
     addWidget(type: WidgetType): void {

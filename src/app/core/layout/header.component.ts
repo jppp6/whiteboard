@@ -8,13 +8,13 @@ import {
 import { Component, computed, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatToolbarModule } from '@angular/material/toolbar';
 import { RouterLink } from '@angular/router';
+import { Session } from '@supabase/supabase-js';
 import { SupabaseService } from '../services/supabase.service';
 
 @Component({
     selector: 'app-header',
-    imports: [MatButtonModule, MatIconModule, MatToolbarModule, RouterLink],
+    imports: [MatButtonModule, MatIconModule, RouterLink],
     template: `
         @if (session()) {
         <div
@@ -36,7 +36,7 @@ import { SupabaseService } from '../services/supabase.service';
                         <mat-icon>dashboard_customize</mat-icon>
                         <span>Whiteboards</span>
                     </a>
-                    <a mat-button routerLink="/help">
+                    <a mat-button routerLink="/help" [disabled]="true">
                         <mat-icon>question_mark</mat-icon>
                         <span>Help</span>
                     </a>
@@ -143,12 +143,12 @@ import { SupabaseService } from '../services/supabase.service';
 })
 export class Header {
     private readonly _supabaseService = inject(SupabaseService);
-    session = computed(() => this._supabaseService.session());
+    session = computed<Session | null>(() => this._supabaseService.session());
 
     projectName = signal<string>('Classroom Board');
     isExpanded = signal<boolean>(false);
 
-    readonly version = 'v1.1.3';
+    readonly version: string = 'v1.1.4';
 
     expand(): void {
         this.isExpanded.set(true);
@@ -159,10 +159,6 @@ export class Header {
     }
 
     openHelpPage(): void {}
-
-    signIn(): void {
-        this._supabaseService.signIn('');
-    }
 
     async signOut(): Promise<void> {
         await this._supabaseService.signOut();

@@ -55,15 +55,15 @@ export class EditChartDialog {
 
     dimension = model<number>(10);
 
-    ngOnInit() {
+    ngOnInit(): void {
         this.dimension.set(this._data.dimension);
     }
 
-    close() {
+    close(): void {
         this._dialogRef.close();
     }
 
-    confirm() {
+    confirm(): void {
         this._dialogRef.close({
             dimension: this.dimension(),
         });

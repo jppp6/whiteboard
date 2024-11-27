@@ -157,7 +157,7 @@ export class CountdownWidget implements OnInit, OnDestroy {
         this.seconds.set(this.metadata().seconds);
     }
 
-    toggleTimer() {
+    toggleTimer(): void {
         if (!this.isRunning()) {
             if (this.remainingTime() === 0) {
                 this.remainingTime.set(this.minutes() * 60 + this.seconds());
@@ -171,7 +171,7 @@ export class CountdownWidget implements OnInit, OnDestroy {
         }
     }
 
-    startTimer() {
+    startTimer(): void {
         this.emitMetadataChange();
 
         this.isRunning.set(true);
@@ -184,25 +184,25 @@ export class CountdownWidget implements OnInit, OnDestroy {
         }, 1000);
     }
 
-    pauseTimer() {
+    pauseTimer(): void {
         this.isRunning.set(false);
         if (this._timerInterval) {
             clearInterval(this._timerInterval);
         }
     }
 
-    resetTimer() {
+    resetTimer(): void {
         this.pauseTimer();
         this.remainingTime.set(0);
     }
 
-    ngOnDestroy() {
+    ngOnDestroy(): void {
         if (this._timerInterval) {
             clearInterval(this._timerInterval);
         }
     }
 
-    emitMetadataChange() {
+    emitMetadataChange(): void {
         this.metadataChanged.emit({
             minutes: this.minutes(),
             seconds: this.seconds(),

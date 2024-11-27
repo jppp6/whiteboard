@@ -127,7 +127,7 @@ export class ChecklistWidget implements OnInit {
         this._nextId = this.metadata().nextId;
     }
 
-    addItem() {
+    addItem(): void {
         const text = this.newItem().trim();
         if (text) {
             this.checklist.update((items) => [
@@ -143,7 +143,7 @@ export class ChecklistWidget implements OnInit {
         }
     }
 
-    toggleItem(item: ChecklistItem) {
+    toggleItem(item: ChecklistItem): void {
         this.checklist.update((checklist) =>
             checklist.map((t) =>
                 t.id === item.id ? { ...t, completed: !t.completed } : t
@@ -152,14 +152,14 @@ export class ChecklistWidget implements OnInit {
         this.emitMetadataChange();
     }
 
-    deleteItem(item: ChecklistItem) {
+    deleteItem(item: ChecklistItem): void {
         this.checklist.update((checklist) =>
             checklist.filter((t) => t.id !== item.id)
         );
         this.emitMetadataChange();
     }
 
-    emitMetadataChange() {
+    emitMetadataChange(): void {
         this.metadataChanged.emit({
             checklist: this.checklist(),
             nextId: this._nextId,

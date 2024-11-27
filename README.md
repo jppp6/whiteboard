@@ -72,4 +72,8 @@ Her input as an educator helped shape the features and user interface to be more
 
 # Run this for the Github Pages deployment
 
+```bash
 ng build --output-path docs --base-href /whiteboard/
+```
+
+Then move /browser/_ to /_
