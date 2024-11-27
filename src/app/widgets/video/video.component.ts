@@ -25,15 +25,26 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
         MatIconModule,
     ],
     template: `
-        <div class="video-wrapper">
-            <div class="drag-handle">
-                <mat-icon>drag_indicator</mat-icon>
-            </div>
+        <div
+            class="content-wrapper"
+            [style.width.px]="width()"
+            [style.height.px]="height()"
+        >
+            <mat-icon class="drag-handle"> drag_indicator </mat-icon>
 
-            @if (!videoId()) {
-            <div class="input-container" (mousedown)="$event.stopPropagation()">
-                <mat-form-field appearance="outline" class="video-input">
-                    <mat-label>YouTube Video URL or ID</mat-label>
+            <div
+                class="content-container"
+                [style.width.px]="width() - 32"
+                [style.height.px]="height() - 32"
+                (mousedown)="$event.stopPropagation()"
+            >
+                @if (!videoId()) {
+                <mat-form-field
+                    class="w100"
+                    appearance="outline"
+                    subscriptSizing="dynamic"
+                >
+                    <mat-label>YouTube Video URL</mat-label>
                     <input matInput [(ngModel)]="inputUrl" />
 
                     @if (inputUrl().trim() !== '') {
@@ -42,93 +53,94 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                     </button>
                     }
                 </mat-form-field>
-                <button
-                    mat-raised-button
-                    [disabled]="!inputUrl()"
-                    (click)="embedVideo()"
-                >
-                    Embed Video
-                </button>
-            </div>
 
-            } @else {
-            <div class="video-container">
-                <iframe
-                    [src]="safeEmbedUrl()"
-                    frameborder="0"
-                    allow=" encrypted-media; web-share"
-                    allowfullscreen
-                ></iframe>
-                <div class="video-controls">
+                <div class="flex-centered">
                     <button
                         mat-raised-button
-                        color="warn"
-                        (click)="resetVideo()"
+                        [disabled]="!inputUrl()"
+                        (click)="embedVideo()"
                     >
-                        Change Video
+                        Embed Video
                     </button>
                 </div>
+
+                } @else {
+                <mat-icon class="edit-button" (click)="resetVideo()">
+                    chevron_left
+                </mat-icon>
+
+                <iframe
+                    class="w100 h100"
+                    [src]="safeEmbedUrl()"
+                    frameborder="0"
+                    allow="encrypted-media"
+                    allowfullscreen
+                ></iframe>
+                }
+
+                <div
+                    class="resize-handle"
+                    (mousedown)="$event.stopPropagation(); startResize($event)"
+                ></div>
             </div>
-            }
         </div>
     `,
-    styles: [
-        `
-            .video-wrapper:hover .drag-handle {
-                opacity: 1;
-            }
-
-            .video-wrapper {
-                background: white;
-                padding: 16px;
-                border-radius: 8px;
-                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-                width: 480px;
-                position: relative;
-            }
-
-            .input-container {
-                display: flex;
-                flex-direction: column;
-                gap: 8px;
-                padding: 16px;
-            }
-
-            .video-input {
-                width: 100%;
-            }
-
-            .video-container {
-                aspect-ratio: 16/9;
-                width: 100%;
-            }
-
-            iframe {
-                width: 100%;
-                height: 100%;
-            }
-
-            .video-controls {
-                margin-top: 8px;
-                display: flex;
-                justify-content: center;
-            }
-        `,
-    ],
 })
 export class VideoWidget {
-    metadata = input.required<{ url: string }>();
-    @Output() metadataChanged = new EventEmitter<{ url: string }>();
+    metadata = input.required<{ url: string; width: number; height: number }>();
+    @Output() metadataChanged = new EventEmitter<{
+        url: string;
+        width: number;
+        height: number;
+    }>();
+
+    private readonly _sanitizer = inject(DomSanitizer);
 
     safeEmbedUrl = signal<SafeResourceUrl>('');
     inputUrl = signal<string>('');
     videoId = signal<string>('');
 
-    private readonly _sanitizer = inject(DomSanitizer);
+    height = signal<number>(300);
+    width = signal<number>(500);
+
+    private _resizing = signal<boolean>(false);
+    private _startHeight = signal<number>(0);
+    private _startWidth = signal<number>(0);
+    private _startX = signal<number>(0);
+    private _startY = signal<number>(0);
 
     ngOnInit(): void {
+        window.addEventListener('mousemove', this.onMouseMove.bind(this));
+        window.addEventListener('mouseup', this.onMouseUp.bind(this));
+
         this.inputUrl.set(this.metadata().url);
+        this.height.set(this.metadata().height);
+        this.width.set(this.metadata().width);
+
         this.embedVideo();
+    }
+
+    startResize(e: MouseEvent): void {
+        this._resizing.set(true);
+        this._startX.set(e.clientX);
+        this._startY.set(e.clientY);
+        this._startWidth.set(this.width());
+        this._startHeight.set(this.height());
+    }
+
+    private onMouseMove(e: MouseEvent): void {
+        if (!this._resizing()) return;
+        this.width.set(
+            Math.max(200, this._startWidth() + e.clientX - this._startX())
+        );
+        this.height.set(
+            Math.max(128, this._startHeight() + e.clientY - this._startY())
+        );
+    }
+
+    private onMouseUp(): void {
+        this._resizing.set(false);
+        this.emitMetadataChange();
     }
 
     embedVideo(): void {
@@ -172,6 +184,8 @@ export class VideoWidget {
     emitMetadataChange(): void {
         this.metadataChanged.emit({
             url: this.inputUrl(),
+            height: this.height(),
+            width: this.width(),
         });
     }
 }

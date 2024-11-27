@@ -3,17 +3,15 @@ import { WidgetType } from './types';
 export function defaultMetadata(type: WidgetType) {
     switch (type) {
         case 'video':
-            return { url: '' };
-        case 'sticker-s':
-            return { stickerB64: '', size: 's' };
-        case 'sticker-l':
-            return { stickerB64: '', size: 'l' };
+            return { url: '', height: 300, width: 500 };
+        case 'sticker':
+            return { stickerB64: '', width: 132, height: 132 };
         case 'text':
-            return { text: '' };
+            return { text: '', height: 300, width: 500 };
         case 'timer':
             return { minutes: 5, seconds: 0 };
         case 'chart':
-            return { dimension: 6 };
+            return { dimension: 6, height: 256 };
         case 'checklist':
             return { checklist: [], nextId: 0 };
         case 'groups':

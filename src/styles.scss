@@ -11,6 +11,16 @@ body {
     flex-direction: column;
 }
 
+.flex-row {
+    display: flex;
+    flex-direction: row;
+}
+
+.flex-centered {
+    display: flex;
+    justify-content: center;
+}
+
 .h100 {
     height: 100%;
 }
@@ -21,20 +31,60 @@ body {
 
 .drag-handle {
     position: absolute;
-    top: 8px;
-    right: 8px;
+    top: 0px;
+    right: -3px;
+    transition: opacity 0.2s ease;
     cursor: move;
-    color: #666;
     z-index: 10;
     opacity: 0;
-    transition: opacity 0.2s ease;
 }
 
 .edit-button {
     position: absolute;
-    top: 8px;
-    left: 8px;
+    top: 0px;
+    left: 0px;
     transition: opacity 0.2s ease;
     z-index: 10;
     opacity: 0;
+}
+
+.resize-handle {
+    position: absolute;
+    right: 0px;
+    bottom: 0px;
+    border-radius: 8px;
+    cursor: se-resize;
+    z-index: 10;
+    transition: opacity 0.2s ease;
+    background-color: #f0f0f0;
+    height: 16px;
+    width: 16px;
+    opacity: 0;
+}
+
+.content-wrapper:hover .drag-handle {
+    opacity: 1;
+}
+
+.content-wrapper:hover .resize-handle {
+    opacity: 1;
+}
+
+.content-wrapper:hover .edit-button {
+    opacity: 1;
+    cursor: pointer;
+}
+
+.content-container {
+    background: white;
+    padding: 16px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.date-time-display {
+    font-size: 32px;
+    font-weight: bold;
+    text-align: center;
+    font-family: monospace;
 }

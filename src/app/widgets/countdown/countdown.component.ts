@@ -28,11 +28,13 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
         MatProgressBarModule,
     ],
     template: `
-        <div class="timer-wrapper" style="width: 232px;">
-            <div class="drag-handle">
-                <mat-icon>drag_indicator</mat-icon>
-            </div>
-            <div class="timer-container" (mousedown)="$event.stopPropagation()">
+        <div class="content-wrapper" style="width: 232px;">
+            <mat-icon class="drag-handle"> drag_indicator </mat-icon>
+
+            <div
+                class="content-container"
+                (mousedown)="$event.stopPropagation()"
+            >
                 @if (isRunning()){
                 <div class="timer-display">
                     {{ displayTime() }}
@@ -46,7 +48,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
                 <div class="timer-input">
                     <mat-form-field
                         appearance="outline"
-                        class="time-input"
+                        style="width:50%"
                         subscriptSizing="dynamic"
                     >
                         <mat-label>Minutes</mat-label>
@@ -60,7 +62,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
                     </mat-form-field>
                     <mat-form-field
                         appearance="outline"
-                        class="time-input"
+                        style="width:50%"
                         subscriptSizing="dynamic"
                     >
                         <mat-label>Seconds</mat-label>
@@ -88,17 +90,6 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
     `,
     styles: [
         `
-            .timer-container {
-                background: white;
-                padding: 16px;
-                border-radius: 8px;
-                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            }
-
-            .timer-wrapper:hover .drag-handle {
-                opacity: 1;
-            }
-
             .timer-display {
                 font-size: 32px;
                 font-weight: bold;
@@ -111,10 +102,6 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
                 display: flex;
                 gap: 8px;
                 padding-bottom: 12px;
-            }
-
-            .time-input {
-                width: 50%;
             }
 
             .timer-controls {

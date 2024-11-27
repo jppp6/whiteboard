@@ -16,49 +16,38 @@ import { debounceTime, distinctUntilChanged, Subject } from 'rxjs';
     selector: 'text',
     imports: [FormsModule, MatIconModule, QuillModule],
     template: `
-        <div class="text-wrapper">
-            <div class="drag-handle">
-                <mat-icon>drag_indicator</mat-icon>
-            </div>
-            <div class="text-container" (mousedown)="$event.stopPropagation()">
-                <div class="edit-button" (click)="toggleToolbar()">
-                    <mat-icon>
-                        {{ toolbarVisible() ? 'expand_less' : 'expand_more' }}
-                    </mat-icon>
-                </div>
+        <div
+            class="content-wrapper"
+            [style.width.px]="width()"
+            [style.height.px]="height()"
+        >
+            <mat-icon class="drag-handle">drag_indicator</mat-icon>
+            <div
+                class="content-container"
+                [style.width.px]="width() - 32"
+                [style.height.px]="height() - 32"
+                (mousedown)="$event.stopPropagation()"
+            >
+                <mat-icon class="edit-button" (click)="toggleToolbar()">
+                    {{ toolbarVisible() ? 'expand_less' : 'expand_more' }}
+                </mat-icon>
+
                 <quill-editor
                     class="w100"
-                    theme="snow"
                     [class.toolbar-hidden]="!toolbarVisible()"
                     (onContentChanged)="onTextChange($event)"
                     [(ngModel)]="text"
-                >
-                </quill-editor>
+                />
+
+                <div
+                    class="resize-handle"
+                    (mousedown)="startResize($event)"
+                ></div>
             </div>
         </div>
     `,
     styles: [
         `
-            .text-wrapper {
-                width: 500px;
-            }
-
-            .text-wrapper:hover .drag-handle {
-                opacity: 1;
-            }
-
-            .text-wrapper:hover .edit-button {
-                opacity: 1;
-                cursor: pointer;
-            }
-
-            .text-container {
-                background: white;
-                padding: 16px;
-                border-radius: 8px;
-                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            }
-
             .toolbar-hidden ::ng-deep .ql-toolbar {
                 display: none;
             }
@@ -66,27 +55,82 @@ import { debounceTime, distinctUntilChanged, Subject } from 'rxjs';
     ],
 })
 export class TextWidget implements OnInit {
-    metadata = input.required<{ text: string }>();
-    @Output() metadataChanged = new EventEmitter<{ text: string }>();
+    metadata = input.required<{
+        text: string;
+        width: number;
+        height: number;
+    }>();
+    @Output() metadataChanged = new EventEmitter<{
+        text: string;
+        width: number;
+        height: number;
+    }>();
 
-    text = model<string>('');
     toolbarVisible = signal<boolean>(false);
+
+    height = signal<number>(300);
+    width = signal<number>(500);
+    text = model<string>('');
+
     private _textChange = new Subject<string>();
+    private _resizing = signal<boolean>(false);
+    private _startHeight = signal<number>(0);
+    private _startWidth = signal<number>(0);
+    private _startX = signal<number>(0);
+    private _startY = signal<number>(0);
 
     ngOnInit(): void {
+        window.addEventListener('mousemove', this.onMouseMove.bind(this));
+        window.addEventListener('mouseup', this.onMouseUp.bind(this));
+
         this.text.set(this.metadata().text);
+        this.height.set(this.metadata().height);
+        this.width.set(this.metadata().width);
+
         this._textChange
             .pipe(debounceTime(2000), distinctUntilChanged())
             .subscribe((text) => {
-                this.metadataChanged.emit({
-                    text: text,
-                });
+                this.text.set(text);
+                this.emitMetadataChange();
             });
     }
+
+    startResize(e: MouseEvent): void {
+        this._resizing.set(true);
+        this._startX.set(e.clientX);
+        this._startY.set(e.clientY);
+        this._startWidth.set(this.width());
+        this._startHeight.set(this.height());
+    }
+
+    private onMouseMove(e: MouseEvent): void {
+        if (!this._resizing()) return;
+        this.width.set(
+            Math.max(200, this._startWidth() + e.clientX - this._startX())
+        );
+        this.height.set(
+            Math.max(76, this._startHeight() + e.clientY - this._startY())
+        );
+    }
+
+    private onMouseUp(): void {
+        this._resizing.set(false);
+        this.emitMetadataChange();
+    }
+
     toggleToolbar(): void {
         this.toolbarVisible.update((v) => !v);
     }
+
     onTextChange(e: ContentChange): void {
         this._textChange.next(e.html || '');
+    }
+
+    emitMetadataChange(): void {
+        this.metadataChanged.emit({
+            text: this.text(),
+            height: this.height(),
+            width: this.width(),
+        });
     }
 }

@@ -48,7 +48,10 @@ import { WidgetToolbar } from './toolbar/toolbar.component';
         StickerWidget,
     ],
     template: `
-        <toolbar (widgetSelected)="addWidget($event)"></toolbar>
+        <toolbar
+            (widgetSelected)="addWidget($event)"
+            (zoomEvent)="handleZoomEvent($event)"
+        ></toolbar>
         <div
             #canvasContainer
             class="canvas-container"
@@ -56,8 +59,8 @@ import { WidgetToolbar } from './toolbar/toolbar.component';
             (mousemove)="onMouseMove($event)"
             (mouseup)="onMouseUp($event)"
             (mouseleave)="onMouseUp($event)"
-            (wheel)="handleZoom($event)"
         >
+            <!-- (wheel)="handleZoom($event)" -->
             <div class="canvas" [style.transform]="transformStyle()">
                 <div class="grid-background"></div>
 
@@ -83,12 +86,7 @@ import { WidgetToolbar } from './toolbar/toolbar.component';
                         [metadata]="widget.metadata"
                         (metadataChanged)="handleMetaChange($event, widget)"
                     />
-                    } @case('sticker-s') {
-                    <sticker
-                        [metadata]="widget.metadata"
-                        (metadataChanged)="handleMetaChange($event, widget)"
-                    />
-                    }@case('sticker-l') {
+                    } @case('sticker') {
                     <sticker
                         [metadata]="widget.metadata"
                         (metadataChanged)="handleMetaChange($event, widget)"
@@ -426,25 +424,47 @@ export class WidgetCanvas implements OnInit, AfterViewInit {
         this._dragStart.set(null);
     }
 
-    handleZoom(event: WheelEvent): void {
-        event.preventDefault();
+    // handleZoom(event: WheelEvent): void {
+    //     event.preventDefault();
 
-        const zoomSensitivity = 0.001;
-        const deltaY = event.deltaY;
-        const scaleChange = 1 - deltaY * zoomSensitivity;
-        const newScale = Math.min(
-            Math.max(this._scale() * scaleChange, 0.1),
-            3
-        );
+    //     const zoomSensitivity = 0.001;
+    //     const deltaY = event.deltaY;
+    //     const scaleChange = 1 - deltaY * zoomSensitivity;
+    //     const newScale = Math.min(
+    //         Math.max(this._scale() * scaleChange, 0.1),
+    //         3
+    //     );
 
+    //     const rect =
+    //         this.canvasContainer().nativeElement.getBoundingClientRect();
+    //     const mouseX = event.clientX - rect.left;
+    //     const mouseY = event.clientY - rect.top;
+
+    //     this._offset.update((current) => ({
+    //         x: mouseX - (mouseX - current.x) * (newScale / this._scale()),
+    //         y: mouseY - (mouseY - current.y) * (newScale / this._scale()),
+    //     }));
+
+    //     this._scale.set(newScale);
+    // }
+
+    handleZoomEvent(type: 'in' | 'out'): void {
+        const zoomStep = 0.2;
+        const newScale =
+            type === 'in'
+                ? Math.min(this._scale() + zoomStep, 3)
+                : Math.max(this._scale() - zoomStep, 0.1);
+
+        // Get canvas center
         const rect =
             this.canvasContainer().nativeElement.getBoundingClientRect();
-        const mouseX = event.clientX - rect.left;
-        const mouseY = event.clientY - rect.top;
+        const centerX = rect.width / 2;
+        const centerY = rect.height / 2;
 
+        // Update offset relative to center
         this._offset.update((current) => ({
-            x: mouseX - (mouseX - current.x) * (newScale / this._scale()),
-            y: mouseY - (mouseY - current.y) * (newScale / this._scale()),
+            x: centerX - (centerX - current.x) * (newScale / this._scale()),
+            y: centerY - (centerY - current.y) * (newScale / this._scale()),
         }));
 
         this._scale.set(newScale);

@@ -20,6 +20,7 @@ import { WidgetSelector, WidgetType } from '../../../core/utils/types';
                 <mat-icon>{{ widget.icon }}</mat-icon>
             </button>
             }
+
             <!-- <button
                 mat-icon-button
                 matTooltip="More Widgets"
@@ -27,6 +28,22 @@ import { WidgetSelector, WidgetType } from '../../../core/utils/types';
             >
                 <mat-icon>more_horiz</mat-icon>
             </button> -->
+        </div>
+        <div class="zoom-container">
+            <button
+                mat-icon-button
+                class="toolbar-button"
+                (click)="emitZoomEvent('in')"
+            >
+                <mat-icon>zoom_in</mat-icon>
+            </button>
+            <button
+                mat-icon-button
+                class="toolbar-button"
+                (click)="emitZoomEvent('out')"
+            >
+                <mat-icon>zoom_out</mat-icon>
+            </button>
         </div>
     `,
     styles: [
@@ -45,6 +62,18 @@ import { WidgetSelector, WidgetType } from '../../../core/utils/types';
                 z-index: 1000;
             }
 
+            .zoom-container {
+                position: fixed;
+                top: 80px;
+                right: 20px;
+                height: 40px;
+                background-color: white;
+                border-radius: 20px;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                display: flex;
+                z-index: 1000;
+            }
+
             .toolbar-button {
                 color: #666;
                 transition: color 0.2s;
@@ -58,6 +87,7 @@ import { WidgetSelector, WidgetType } from '../../../core/utils/types';
 })
 export class WidgetToolbar {
     @Output() widgetSelected = new EventEmitter<WidgetType>();
+    @Output() zoomEvent = new EventEmitter<'in' | 'out'>();
 
     readonly widgets: WidgetSelector[] = [
         { type: 'text', icon: 'notes', tooltip: 'Add Text' },
@@ -65,8 +95,7 @@ export class WidgetToolbar {
         { type: 'chart', icon: 'table_chart', tooltip: 'Add Chart' },
         { type: 'checklist', icon: 'checklist', tooltip: 'Add Checklist' },
         { type: 'groups', icon: 'groups', tooltip: 'Add Groups' },
-        { type: 'sticker-s', icon: 'image', tooltip: 'Small Sticker ' },
-        { type: 'sticker-l', icon: 'wallpaper', tooltip: 'Large Sticker' },
+        { type: 'sticker', icon: 'image', tooltip: 'Add Image' },
         { type: 'date', icon: 'today', tooltip: 'Add Date' },
         { type: 'calendar', icon: 'calendar_month', tooltip: 'Add Calendar' },
         { type: 'timer', icon: 'timer', tooltip: 'Add Timer' },
@@ -75,5 +104,9 @@ export class WidgetToolbar {
 
     addWidget(type: WidgetType): void {
         this.widgetSelected.emit(type);
+    }
+
+    emitZoomEvent(type: 'in' | 'out'): void {
+        this.zoomEvent.emit(type);
     }
 }

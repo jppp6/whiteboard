@@ -9,11 +9,9 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { MatSliderModule } from '@angular/material/slider';
 import { Person } from '../../core/utils/types';
 
 @Component({
@@ -25,16 +23,15 @@ import { Person } from '../../core/utils/types';
         MatButtonModule,
         MatInputModule,
         MatChipsModule,
-        MatCardModule,
-        MatSliderModule,
     ],
     template: `
-        <div class="group-wrapper">
-            <div class="drag-handle">
-                <mat-icon>drag_indicator</mat-icon>
-            </div>
+        <div class="content-wrapper" style="width: 332px">
+            <mat-icon class="drag-handle">drag_indicator</mat-icon>
 
-            <div class="group-container" (mousedown)="$event.stopPropagation()">
+            <div
+                class="content-container"
+                (mousedown)="$event.stopPropagation()"
+            >
                 <mat-form-field appearance="outline" class="w100">
                     <mat-label>Add Person</mat-label>
                     <input
@@ -66,8 +63,7 @@ import { Person } from '../../core/utils/types';
                     </mat-form-field>
 
                     <button
-                        mat-raised-button
-                        color="accent"
+                        mat-stroked-button
                         (click)="generateGroups()"
                         [disabled]="people().length < 1 || numGroups() > 10"
                     >
@@ -75,7 +71,6 @@ import { Person } from '../../core/utils/types';
                     </button>
                     <button
                         mat-raised-button
-                        color="accent"
                         (click)="toggleShowGroupList()"
                         [disabled]="people().length < 1"
                     >
@@ -84,71 +79,41 @@ import { Person } from '../../core/utils/types';
                 </div>
 
                 @if (showGroupList() && people().length !== 0){
-                <div class="people-list">
-                    <mat-chip-set>
-                        @for (person of people(); track person.id) {
-                        <mat-chip (removed)="removePerson(person)">
-                            {{ person.name }}
-                            <mat-icon matChipRemove>cancel</mat-icon>
-                        </mat-chip>
-                        }
-                    </mat-chip-set>
-                </div>
-                } @if(generatedGroups().length>0) {
-                <div class="generated-groups">
-                    @for (group of generatedGroups(); track group.id) {
-                    <div class="group-card">
-                        <strong>Group {{ group.id }}</strong>
-                        <ul>
-                            @for (member of group.members; track member.id) {
-                            <li>{{ member.name }}</li>
-                            }
-                        </ul>
-                    </div>
+                <mat-chip-set>
+                    @for (person of people(); track person.id) {
+                    <mat-chip (removed)="removePerson(person)">
+                        {{ person.name }}
+                        <mat-icon matChipRemove>cancel</mat-icon>
+                    </mat-chip>
                     }
+                </mat-chip-set>
+                } @if(generatedGroups().length>0) {
+                <br />
+                @for (group of generatedGroups(); track group.id) {
+                <div class="group-card">
+                    <strong>Group {{ group.id }}</strong>
+                    <ul>
+                        @for (member of group.members; track member.id) {
+                        <li>{{ member.name }}</li>
+                        }
+                    </ul>
                 </div>
-                }
+                } }
             </div>
         </div>
     `,
     styles: [
         `
-            .group-wrapper {
-                width: 332px;
-            }
-
-            .group-wrapper:hover .drag-handle {
-                opacity: 1;
-            }
-
-            .group-container {
-                background: white;
-                padding: 16px;
-                width: 300px;
-                border-radius: 8px;
-                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            }
-
-            .people-list {
-                padding-top: 12px;
-                margin-bottom: 8px;
-            }
-
-            .generated-groups {
-                padding-top: 16px;
-            }
-
             .group-card {
                 padding: 15px;
                 border: 1px solid #ccc;
                 border-radius: 4px;
                 background-color: #f5f5f5;
-            }
-
-            .group-card ul {
-                list-style-type: none;
-                padding: 0;
-                margin: 0;
+                ul {
+                    list-style-type: none;
+                    padding: 0;
+                    margin: 0;
+                }
             }
         `,
     ],

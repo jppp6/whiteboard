@@ -15,19 +15,21 @@ import { MatIconModule } from '@angular/material/icon';
     imports: [CommonModule, MatButtonModule, MatIconModule],
     template: `
         <div
-            class="sticker-wrapper"
-            [ngStyle]="{ width: size() === 's' ? '232px' : ' 332px' }"
+            class="content-wrapper"
+            [style.width.px]="width()"
+            [style.height.px]="height()"
         >
-            <div class="drag-handle">
-                <mat-icon>drag_indicator</mat-icon>
-            </div>
+            <mat-icon class="drag-handle">drag_indicator</mat-icon>
             <div
-                class="sticker-container"
+                class="content-container"
+                [style.width.px]="width() - 32"
+                [style.height.px]="height() - 32"
                 (mousedown)="$event.stopPropagation()"
             >
-                <div class="edit-button" (click)="fileInput.click()">
-                    <mat-icon>edit</mat-icon>
-                </div>
+                <mat-icon class="edit-button" (click)="fileInput.click()">
+                    upload
+                </mat-icon>
+
                 <input
                     type="file"
                     #fileInput
@@ -37,67 +39,48 @@ import { MatIconModule } from '@angular/material/icon';
                 />
                 @if (stickerB64()) {
                 <img
+                    style="width: 100%; height: 100%; object-fit: contain;"
                     [src]="stickerB64()"
-                    alt="Selected sticker"
-                    class="sticker-image"
                 />
-                } @else {
-                <div class="empty-sticker">
-                    <mat-icon>image</mat-icon>
-                </div>
                 }
+
+                <div
+                    class="resize-handle"
+                    (mousedown)="startResize($event)"
+                ></div>
             </div>
         </div>
     `,
-    styles: [
-        `
-            .sticker-container {
-                background: white;
-                padding: 16px;
-                border-radius: 8px;
-                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            }
-
-            .sticker-wrapper:hover .edit-button,
-            .sticker-wrapper:hover .drag-handle {
-                opacity: 1;
-            }
-
-            .sticker-image {
-                width: 100%;
-                object-fit: contain;
-            }
-
-            .empty-sticker {
-                width: 100%;
-                height: 100%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }
-
-            .empty-sticker mat-icon {
-                font-size: 48px;
-                width: 48px;
-                height: 48px;
-                color: #bdbdbd;
-            }
-        `,
-    ],
 })
 export class StickerWidget implements OnInit {
-    metadata = input.required<{ stickerB64: string; size: 's' | 'l' }>();
+    metadata = input.required<{
+        stickerB64: string;
+        width: number;
+        height: number;
+    }>();
     @Output() metadataChanged = new EventEmitter<{
         stickerB64: string;
-        size: 's' | 'l';
+        width: number;
+        height: number;
     }>();
 
     stickerB64 = signal<string>('');
-    size = signal<'s' | 'l'>('s');
+    height = signal<number>(132);
+    width = signal<number>(132);
+
+    private _resizing = signal<boolean>(false);
+    private _startHeight = signal<number>(0);
+    private _startWidth = signal<number>(0);
+    private _startX = signal<number>(0);
+    private _startY = signal<number>(0);
 
     ngOnInit(): void {
+        window.addEventListener('mousemove', this.onMouseMove.bind(this));
+        window.addEventListener('mouseup', this.onMouseUp.bind(this));
+
         this.stickerB64.set(this.metadata().stickerB64);
-        this.size.set(this.metadata().size);
+        this.width.set(this.metadata().width);
+        this.height.set(this.metadata().height);
     }
 
     onFileSelected(event: Event): void {
@@ -115,10 +98,34 @@ export class StickerWidget implements OnInit {
         }
     }
 
+    startResize(e: MouseEvent): void {
+        this._resizing.set(true);
+        this._startX.set(e.clientX);
+        this._startY.set(e.clientY);
+        this._startWidth.set(this.width());
+        this._startHeight.set(this.height());
+    }
+
+    onMouseMove(e: MouseEvent): void {
+        if (!this._resizing()) return;
+        this.width.set(
+            Math.max(132, this._startWidth() + e.clientX - this._startX())
+        );
+        this.height.set(
+            Math.max(132, this._startHeight() + e.clientY - this._startY())
+        );
+    }
+
+    onMouseUp(): void {
+        this._resizing.set(false);
+        this.emitMetadataChange();
+    }
+
     emitMetadataChange() {
         this.metadataChanged.emit({
             stickerB64: this.stickerB64(),
-            size: this.size(),
+            width: this.width(),
+            height: this.height(),
         });
     }
 }

@@ -28,12 +28,10 @@ import { ChecklistItem } from '../../core/utils/types';
     ],
 
     template: `
-        <div class="checklist-wrapper">
-            <div class="drag-handle">
-                <mat-icon>drag_indicator</mat-icon>
-            </div>
+        <div class="content-wrapper" style="width: 282px">
+            <mat-icon class="drag-handle">drag_indicator</mat-icon>
             <div
-                class="checklist-container"
+                class="content-container"
                 (mousedown)="$event.stopPropagation()"
             >
                 <mat-form-field
@@ -81,22 +79,6 @@ import { ChecklistItem } from '../../core/utils/types';
     `,
     styles: [
         `
-            .checklist-wrapper {
-                width: 282px;
-            }
-
-            .checklist-container {
-                background: white;
-                padding: 16px;
-                border-radius: 8px;
-                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-                width: 250px;
-            }
-
-            .checklist-wrapper:hover .drag-handle {
-                opacity: 1;
-            }
-
             .item {
                 display: flex;
                 justify-content: space-between;
