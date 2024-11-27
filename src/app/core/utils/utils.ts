@@ -11,7 +11,7 @@ export function defaultMetadata(type: WidgetType) {
         case 'timer':
             return { minutes: 5, seconds: 0 };
         case 'chart':
-            return { dimension: 6, height: 256 };
+            return { dimension: 6, width: 256 };
         case 'checklist':
             return { checklist: [], nextId: 0 };
         case 'groups':
