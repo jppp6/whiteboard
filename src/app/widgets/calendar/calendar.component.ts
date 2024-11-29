@@ -8,7 +8,7 @@ import { MatIconModule } from '@angular/material/icon';
     imports: [MatDatepickerModule, MatIconModule],
     providers: [provideNativeDateAdapter()],
     template: `
-        <div class="content-wrapper" style="300px">
+        <div class="content-wrapper" style="350px">
             <mat-icon class="drag-handle">drag_indicator</mat-icon>
             <div
                 class="content-container"

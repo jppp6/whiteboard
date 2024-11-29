@@ -6,6 +6,7 @@ import {
     Session,
     SupabaseClient,
 } from '@supabase/supabase-js';
+import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environments';
 import { Widget } from '../utils/types';
 
@@ -139,5 +140,20 @@ export class SupabaseService {
 
     signOut() {
         return this.supabaseClient.auth.signOut();
+    }
+
+    authChangesRx() {
+        return new Observable((observer) => {
+            const {
+                data: { subscription },
+            } = this.supabaseClient.auth.onAuthStateChange((_, session) => {
+                observer.next(session);
+            });
+
+            // Cleanup subscription when observable is unsubscribed
+            return () => {
+                subscription.unsubscribe();
+            };
+        });
     }
 }

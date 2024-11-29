@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { authGuard } from './core/services/auth.guard';
 import { WidgetCanvas } from './pages/canvas/canvas.component';
 import { Login } from './pages/login/login.component';
 import { Selector } from './pages/selector/selector.component';
@@ -12,17 +13,16 @@ export const routes: Routes = [
     {
         path: 'login',
         component: Login,
-        // canActivate: [authGuard]
     },
     {
         path: 'whiteboards',
         component: Selector,
-        // canActivate: [authGuard]
+        canActivate: [authGuard],
     },
     {
         path: 'whiteboard/:id',
         component: WidgetCanvas,
-        // canActivate: [authGuard],
+        canActivate: [authGuard],
     },
     { path: '**', redirectTo: 'whiteboards' },
 ];
